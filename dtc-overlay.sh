@@ -32,7 +32,9 @@ dtc_git_build () {
 		git checkout ${git_tag} -b ${git_tag}-build
 	fi
 
-	cp ${HOME}/bb.org-overlays/fixes/dtc-lexer.l ${HOME}/git/${project}/
+	cd -
+        cp fixes/dtc-lexer.l ${HOME}/git/${project}/
+        cd -
 	make clean
 	make PREFIX=/usr/local/ CC=gcc CROSS_COMPILE= all
 	echo "Installing into: /usr/local/bin/"
