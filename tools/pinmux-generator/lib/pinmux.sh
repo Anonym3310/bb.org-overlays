@@ -19,7 +19,7 @@ echo_label () {
 }
 
 echo_label_analog () {
-	msg="	/* ${pcbpin} (ZCZ ball ${ball})  ${label_info}         */" ; echo_both ; msg="" ; echo_both
+	msg="	/* ${pcbpin} (ZCZ ball ${ball})  ${label_info} */" ; echo_both ; msg="" ; echo_both
 	echo "${pcbpin}_PIN=\"${label_pin}\"" >>${file}_config-pin.txt
 	echo "${pcbpin}_INFO=\"${label_info}\"" >>${file}_config-pin.txt
 	echo "${pcbpin}_CAPE=\"\"" >>${file}_config-pin.txt
@@ -212,11 +212,12 @@ echo_gpio () {
 
 get_json_pkg () {
 	###Offline: https://software-dl.ti.com/ccs/esd/pinmux/pinmux_release_archive.html
-	pinmux_version="4.0.1526"
+	#pinmux_version="4.0.1526"
+	pinmux_version="4.0.1543"
 	if [ -d ./tmp/ ] ; then
 		rm -rf ./tmp/ || true
 	fi
-	wget -c http://software-dl.ti.com/ccs/esd/pinmux/pinmux-${pinmux_version}-setup.run
+	wget -c https://downloads.ti.com/ccs/esd/pinmux/pinmux-${pinmux_version}-setup.run
 	chmod +x pinmux-${pinmux_version}-setup.run
 	mkdir tmp
 	./pinmux-${pinmux_version}-setup.run --unattendedmodeui none --mode unattended --prefix ./tmp
@@ -392,32 +393,28 @@ find_ball () {
 	esac
 
 	if [ ! "x${use_name}" = "x" ] ; then
-		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${use_name} */" >> ${file}.dts
+		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${PinID} (${use_name}) */" >> ${file}.dts
 		unset use_name
 	else
-		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${name} */" >> ${file}.dts
+		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${PinID} (${name}) */" >> ${file}.dts
 	fi
 	cp_info_default=${name}
 
-	dtabs=1
 	echo cp_default=${cp_default}
 	case "${cp_default}" in
 	gpio|pruin)
-		dtabs=4
 		pinsetting="PIN_INPUT"
 		;;
 	pwm|pwm2)
 		pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
 		;;
 	i2c)
-		dtabs=2
 		pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
 		;;
 	uart|i2c|spi|spi_cs|spi_sclk)
 		pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
 		;;
 	eqep)
-		dtabs=2
 		pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
 		;;
 	emmc|hdmi|audio)
@@ -429,7 +426,6 @@ find_ball () {
 		fi
 		case "${pupdStateAfterHHV}" in
 		PU)
-			dtabs=2
 			pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
 		;;
 		PD)
@@ -444,29 +440,22 @@ find_ball () {
 		;;
 	esac
 
-	echo "	${pcbpin}_default_pin: pinmux_${pcbpin}_default_pin { pinctrl-single,pins = <" >> ${file}.dts
-	if [ "x${dtabs}" = "x1" ] ; then
-		echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
-	fi
-	if [ "x${dtabs}" = "x2" ] ; then
-		echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };		/* ${PinID}.${name} */" >> ${file}.dts
-	fi
-	if [ "x${dtabs}" = "x3" ] ; then
-		echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };			/* ${PinID}.${name} */" >> ${file}.dts
-	fi
-	if [ "x${dtabs}" = "x4" ] ; then
-		echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };				/* ${PinID}.${name} */" >> ${file}.dts
-	fi
+#	echo "	${pcbpin}_default_pin: pinmux_${pcbpin}_default_pin { pinctrl-single,pins = <" >> ${file}.dts
+#	echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
+	echo "	BONE_PIN(${pcbpin}, default, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
 
 	number=${gpio_index}
 	get_name_mode
 
-	echo "	${pcbpin}_gpio_pin: pinmux_${pcbpin}_gpio_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}) >; };			/* ${PinID}.${name} */" >> ${file}.dts
-	echo "	${pcbpin}_gpio_pu_pin: pinmux_${pcbpin}_gpio_pu_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}) >; };		/* ${PinID}.${name} */" >> ${file}.dts
-	echo "	${pcbpin}_gpio_pd_pin: pinmux_${pcbpin}_gpio_pd_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
+#	echo "	${pcbpin}_gpio_pin: pinmux_${pcbpin}_gpio_pin { pinctrl-single,pins = <" >> ${file}.dts
+#	echo "		${pcbpin}( PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}) >; };			/* ${PinID}.${name} */" >> ${file}.dts
+	echo "	BONE_PIN(${pcbpin}, gpio, ${pcbpin}(PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+#	echo "	${pcbpin}_gpio_pu_pin: pinmux_${pcbpin}_gpio_pu_pin { pinctrl-single,pins = <" >> ${file}.dts
+#	echo "		${pcbpin}( PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}) >; };		/* ${PinID}.${name} */" >> ${file}.dts
+	echo "	BONE_PIN(${pcbpin}, gpio_pu, ${pcbpin}(PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+#	echo "	${pcbpin}_gpio_pd_pin: pinmux_${pcbpin}_gpio_pd_pin { pinctrl-single,pins = <" >> ${file}.dts
+#	echo "		${pcbpin}( PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
+	echo "	BONE_PIN(${pcbpin}, gpio_pd, ${pcbpin}(PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
 
 	gpio_mul=$(echo ${name} | awk -F'_' '{print $1}' | awk -F'gpio' '{print $2}' || true)
 	gpio_add=$(echo ${name} | awk -F'_' '{print $2}' || true)
@@ -625,19 +614,9 @@ find_ball () {
 			esac
 
 			if [ ! "x${valid_pin_mode}" = "x" ] ; then
-				echo "	${pcbpin}_${valid_pin_mode}_pin: pinmux_${pcbpin}_${valid_pin_mode}_pin { pinctrl-single,pins = <" >> ${file}.dts
-				if [ "x${tabs}" = "x1" ] ; then
-					echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
-				fi
-				if [ "x${tabs}" = "x2" ] ; then
-					echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };		/* ${PinID}.${name} */" >> ${file}.dts
-				fi
-				if [ "x${tabs}" = "x3" ] ; then
-					echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };			/* ${PinID}.${name} */" >> ${file}.dts
-				fi
-				if [ "x${tabs}" = "x4" ] ; then
-					echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };				/* ${PinID}.${name} */" >> ${file}.dts
-				fi
+				#echo "	${pcbpin}_${valid_pin_mode}_pin: pinmux_${pcbpin}_${valid_pin_mode}_pin { pinctrl-single,pins = <" >> ${file}.dts
+				#echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
+				echo "	BONE_PIN(${pcbpin}, ${valid_pin_mode}, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
 			fi
 		fi
 	done
